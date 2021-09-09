@@ -3,9 +3,12 @@ var Movie = require('../models/movie');
 const mongoose = require('mongoose');
 module.exports = {
     getAll: function (req, res) {
-        Movie.find(function (err, movies) {
+        Movie.find({})
+        .populate('actors')
+        .exec(function (err, movie) {
             if (err) return res.status(400).json(err);
-            res.json(movies);
+            if (!movie) return res.status(404).json();
+            res.json(movie);
         });
     },
     createOne: function (req, res) {
@@ -54,7 +57,7 @@ module.exports = {
         });
     },
     removeActor: function (req, res) {
-        Movie.findOne({ _id: req.params.idmovie }, function (err, movie) {
+        Movie.findOne({ _id: req.params.id }, function (err, movie) {
             if (err) return res.status(400).json(err);
             if (!movie) return res.status(404).json();
             Actor.findOne({ _id: req.body.id }, function (err, actor) {
@@ -67,5 +70,35 @@ module.exports = {
                 });
             })
         });
-    }
+    },
+    getAllYear: function (req, res) {
+        let movieID = new mongoose.Types.ObjectId(req.params.movieId);
+        let year1 = req.params.year1;
+        let year2 = req.params.year2;
+
+        Movie.where({ _id: movieID }).where('year').gte(year2).where('year').lte(year1).exec(function (err, movie) {
+            if (err) return res.status(400).json(err);
+            if (!movie) return res.status(404).json();
+            movie.populate('actors').exec(err, function(err, movies){
+                if (err) return res.json(err);
+                if (!movies) return res.json();
+                res.json(movies);
+            });
+        });
+    },
+    deleteAllYear: function (req, res) {
+        let movieID = new mongoose.Types.ObjectId(req.params.movieId);
+        let year1 = req.params.year1;
+        let year2 = req.params.year2;
+
+        Movie.wher({ _id: movieID }).where('year').gte(year2).where('year').lte(year1).exec(function (err, movie) {
+            if (err) return res.status(400).json(err);
+            if (!movie) return res.status(404).json();
+            movie.remove().exec(err, function(err, movies){
+                if (err) return res.json(err);
+                if (!movies) return res.json();
+                res.json(movies);
+            });
+        });
+    }    
 };

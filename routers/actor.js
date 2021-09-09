@@ -1,14 +1,15 @@
 const mongoose = require('mongoose');
 const Actor = require('../models/actor');
+const movie = require('../models/movie');
 const Movie = require('../models/movie');
 module.exports = {
     getAll: function (req, res) {
-        Actor.find(function (err, actors) {
-            if (err) {
-                return res.status(404).json(err);
-            } else {
-                res.json(actors);
-            }
+        Actor.find({})
+        .populate('movies')
+        .exec(function (err, actor) {
+            if (err) return res.status(400).json(err);
+            if (!actor) return res.status(404).json();
+            res.json(actor);
         });
     },
     createOne: function (req, res) {
@@ -35,15 +36,26 @@ module.exports = {
             res.json(actor);
         });
     },
+    // deleteOne: function (req, res) {
+    //     Actor.findOneAndRemove({ _id: req.params.id }, function (err) {
+    //         if (err) return res.status(400).json(err);
+    //         res.json();
+    //      });
+    // },
     deleteOne: function (req, res) {
-        Actor.findOneAndRemove({ _id: req.params.id }, function (err) {
+        Actor.findOneAndRemove({ _id: req.params.id }, function (err, actor) {
             if (err) return res.status(400).json(err);
-            res.json();
-            // Movie.remove({movie._id}, function (err) {
-            //     if (err) return res.status(400).json(err);
-            //     res.json();
-            // });
-         });
+            if (!actor) return res.status(404).json();
+            Movie.findOneAndRemove({ _id: movie.id }, function (err, movie) {
+                if (err) return res.status(400).json(err);
+                if (!movie) return res.status(404).json();
+                actor.movies.remove(movie._id);
+                // actor.save(function (err) {
+                //     if (err) return res.status(500).json(err);
+                     res.json(actor);
+                // });
+            })
+        });
     },
     addMovie: function (req, res) {
         Actor.findOne({ _id: req.params.id }, function (err, actor) {
@@ -61,7 +73,7 @@ module.exports = {
         });
     },
     removeMovie: function (req, res) {
-        Actor.findOne({ _id: req.params.idactor }, function (err, actor) {
+        Actor.findOne({ _id: req.params.id }, function (err, actor) {
             if (err) return res.status(400).json(err);
             if (!actor) return res.status(404).json();
             Movie.findOne({ _id: req.body.id }, function (err, movie) {
