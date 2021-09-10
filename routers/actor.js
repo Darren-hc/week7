@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { db } = require('../models/actor');
 const Actor = require('../models/actor');
 const movie = require('../models/movie');
 const Movie = require('../models/movie');
@@ -36,12 +37,6 @@ module.exports = {
             res.json(actor);
         });
     },
-    // deleteOne: function (req, res) {
-    //     Actor.findOneAndRemove({ _id: req.params.id }, function (err) {
-    //         if (err) return res.status(400).json(err);
-    //         res.json();
-    //      });
-    // },
     deleteOne: function (req, res) {
         Actor.findOneAndRemove({ _id: req.params.id }, function (err, actor) {
             if (err) return res.status(400).json(err);
@@ -85,6 +80,13 @@ module.exports = {
                     res.json(actor);
                 });
             })
+        });
+    },
+    incrementAge: function (req, res) {
+         Actor.updateMany({ name: /^T/ }, { $inc: { bYear: 2 } }, { upsert: true }, function (err, actor) {
+            if (err) return res.status(400).json(err);
+            if (!actor) return res.status(404).json();
+            res.json(actor);
         });
     }
 };
